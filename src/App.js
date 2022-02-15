@@ -1,24 +1,73 @@
-import logo from './logo.svg';
+import React , {useEffect , lazy , Suspense} from 'react';
 import './App.css';
+import {Switch , BrowserRouter , Route} from 'react-router-dom';
+//import Home from './pages/Home/Home';
+import Header from './components/Header/Header';
+//import Login from './pages/Login/Login';
+//import Register from './pages/Register/Register';
+import {useDispatch} from 'react-redux';
+import {auth} from './utils/firebase';
+import { setuser } from './redux/actions';
+//import SingleProduct from './pages/SingleProduct/SingleProduct';
+//import Checkout from './pages/Checkout/Checkout';
+//import Payment from './pages/Payment/Payment';
+
+import {loadStripe} from '@stripe/stripe-js';
+import {Elements} from '@stripe/react-stripe-js';
+import Loading from './components/Loading/Loading';
+//import Orders from './pages/Orders/Orders';
+
+const Home = lazy(() => import('./pages/Home/Home'));
+const Login = lazy(() => import('./pages/Login/Login'));
+const Register = lazy(() => import('./pages/Register/Register'));
+const SingleProduct = lazy(() => import('./pages/SingleProduct/SingleProduct'));
+const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
+const Payment = lazy(() => import('./pages/Payment/Payment'));
+const Orders = lazy(() => import('./pages/Orders/Orders'));
+
+const promise = loadStripe(
+  "pk_test_51KQCmrSB14PMAdzbymVCfcZnYRK08NyrSavts9tyJAzor5tLU1itBHEfpZ1WxiaYEws1HiUvacYmAknmABgPmZSi00lBIyAwE3"
+);
 
 function App() {
+
+  let dispatch = useDispatch();
+
+  useEffect(() => {
+    auth.onAuthStateChanged((authUser) => {
+      if(authUser){
+        dispatch(setuser(authUser));
+      }
+      else{
+        dispatch(setuser(null));
+      }
+    });
+  }, [dispatch]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Switch>
+          <Suspense fallback={<Loading/>}>
+
+            <Route exact path="/"> <Header/> <Home/> </Route>
+            <Route path="/login"> <Login/> </Route>
+            <Route path="/register"> <Register/> </Route>
+            <Route path="/product/:id"> <Header/> <SingleProduct/> </Route>
+            <Route path="/checkout"> <Header/> <Checkout/> </Route>
+            <Route path="/orders"> <Header/> <Orders/> </Route>
+
+            <Route path="/payment"> 
+              <Header/> 
+              <Elements stripe={promise}>
+                <Payment/> 
+                </Elements>
+            </Route>
+
+          </Suspense>
+        </Switch>
+      </div>
+    </BrowserRouter>
   );
 }
 
